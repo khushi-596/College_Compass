@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import CompareForm from '@/components/CompareForm';
+import { prisma } from '@/lib/prisma';
 import { CollegeDetail } from '@/lib/types';
 
 interface PageProps {
@@ -17,16 +18,13 @@ export default async function ComparePage({ searchParams }: PageProps) {
 
   // Fetch all colleges for the selection form
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/colleges?limit=100`,
-      { cache: 'no-store' }
-    );
-    const data = await response.json();
-    
-    if (response.ok) {
-      // Get first college's details to retrieve full college data
-      allColleges = data.colleges;
-    }
+    const fetchedAll = await prisma.college.findMany({
+      orderBy: { rating: 'desc' },
+      include: {
+        courses: true,
+      },
+    });
+    allColleges = fetchedAll as unknown as CollegeDetail[];
   } catch (err) {
     error = 'Failed to fetch colleges';
     console.error(err);
@@ -41,17 +39,15 @@ export default async function ComparePage({ searchParams }: PageProps) {
 
   if (collegeIds.length > 0) {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/compare?${collegeIds
-          .map((id) => `ids=${id}`)
-          .join('&')}`,
-        { cache: 'no-store' }
-      );
-      const data = await response.json();
-      
-      if (response.ok) {
-        selectedColleges = data;
-      }
+      const fetchedSelected = await prisma.college.findMany({
+        where: {
+          id: { in: collegeIds },
+        },
+        include: {
+          courses: true,
+        },
+      });
+      selectedColleges = fetchedSelected as unknown as CollegeDetail[];
     } catch (err) {
       console.error('Failed to fetch comparison data:', err);
     }

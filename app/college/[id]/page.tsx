@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { prisma } from '@/lib/prisma';
 import { CollegeDetail } from '@/lib/types';
 import { notFound } from 'next/navigation';
 
@@ -15,16 +16,17 @@ export default async function CollegePage({ params }: PageProps) {
   let error = '';
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/colleges/${id}`,
-      { cache: 'no-store' }
-    );
-    const data = await response.json();
-    
-    if (response.ok) {
-      college = data;
+    const fetchedCollege = await prisma.college.findUnique({
+      where: { id },
+      include: {
+        courses: true,
+      },
+    });
+
+    if (fetchedCollege) {
+      college = fetchedCollege as unknown as CollegeDetail;
     } else {
-      error = data.error || 'College not found';
+      error = 'College not found';
     }
   } catch (err) {
     error = 'Failed to fetch college details';

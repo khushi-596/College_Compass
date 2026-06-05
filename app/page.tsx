@@ -2,6 +2,7 @@ import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/SearchBar';
 import CollegeCard from '@/components/CollegeCard';
 import Pagination from '@/components/Pagination';
+import { prisma } from '@/lib/prisma';
 import { College } from '@/lib/types';
 
 interface SearchParams {
@@ -20,30 +21,50 @@ export default async function Home({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const page = parseInt(resolvedSearchParams.page || '1');
   
-  const params = new URLSearchParams();
-  if (resolvedSearchParams.search) params.set('search', resolvedSearchParams.search);
-  if (resolvedSearchParams.location) params.set('location', resolvedSearchParams.location);
-  if (resolvedSearchParams.minFees) params.set('minFees', resolvedSearchParams.minFees);
-  if (resolvedSearchParams.maxFees) params.set('maxFees', resolvedSearchParams.maxFees);
-  params.set('page', page.toString());
+  const search = resolvedSearchParams.search || '';
+  const location = resolvedSearchParams.location || '';
+  const minFees = resolvedSearchParams.minFees ? parseInt(resolvedSearchParams.minFees) : undefined;
+  const maxFees = resolvedSearchParams.maxFees ? parseInt(resolvedSearchParams.maxFees) : undefined;
+  const limit = 10;
+  const skip = (page - 1) * limit;
 
   let colleges: College[] = [];
-  let pagination = { total: 0, page, limit: 10, totalPages: 0 };
+  let pagination = { total: 0, page, limit, totalPages: 0 };
   let error = '';
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/colleges?${params.toString()}`,
-      { cache: 'no-store' }
-    );
-    const data = await response.json();
-    
-    if (response.ok) {
-      colleges = data.colleges;
-      pagination = data.pagination;
-    } else {
-      error = data.error || 'Failed to fetch colleges';
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
     }
+
+    if (location) {
+      where.location = { contains: location, mode: 'insensitive' };
+    }
+
+    if (minFees !== undefined || maxFees !== undefined) {
+      where.fees = {};
+      if (minFees !== undefined) where.fees.gte = minFees;
+      if (maxFees !== undefined) where.fees.lte = maxFees;
+    }
+
+    const [fetchedColleges, total] = await Promise.all([
+      prisma.college.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { rating: 'desc' },
+      }),
+      prisma.college.count({ where }),
+    ]);
+
+    colleges = fetchedColleges as unknown as College[];
+    const totalPages = Math.ceil(total / limit);
+    pagination = { total, page, limit, totalPages };
   } catch (err) {
     error = 'Failed to fetch colleges. Please try again later.';
     console.error(err);
