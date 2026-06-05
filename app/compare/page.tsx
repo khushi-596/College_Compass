@@ -4,12 +4,13 @@ import CompareForm from '@/components/CompareForm';
 import { CollegeDetail } from '@/lib/types';
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     colleges?: string | string[];
-  };
+  }>;
 }
 
 export default async function ComparePage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
   let allColleges: CollegeDetail[] = [];
   let selectedColleges: CollegeDetail[] = [];
   let error = '';
@@ -32,10 +33,10 @@ export default async function ComparePage({ searchParams }: PageProps) {
   }
 
   // Fetch selected colleges if provided
-  const collegeIds = searchParams.colleges
-    ? Array.isArray(searchParams.colleges)
-      ? searchParams.colleges
-      : [searchParams.colleges]
+  const collegeIds = resolvedSearchParams.colleges
+    ? Array.isArray(resolvedSearchParams.colleges)
+      ? resolvedSearchParams.colleges
+      : [resolvedSearchParams.colleges]
     : [];
 
   if (collegeIds.length > 0) {

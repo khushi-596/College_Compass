@@ -13,17 +13,18 @@ interface SearchParams {
 }
 
 interface PageProps {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }
 
 export default async function Home({ searchParams }: PageProps) {
-  const page = parseInt(searchParams.page || '1');
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt(resolvedSearchParams.page || '1');
   
   const params = new URLSearchParams();
-  if (searchParams.search) params.set('search', searchParams.search);
-  if (searchParams.location) params.set('location', searchParams.location);
-  if (searchParams.minFees) params.set('minFees', searchParams.minFees);
-  if (searchParams.maxFees) params.set('maxFees', searchParams.maxFees);
+  if (resolvedSearchParams.search) params.set('search', resolvedSearchParams.search);
+  if (resolvedSearchParams.location) params.set('location', resolvedSearchParams.location);
+  if (resolvedSearchParams.minFees) params.set('minFees', resolvedSearchParams.minFees);
+  if (resolvedSearchParams.maxFees) params.set('maxFees', resolvedSearchParams.maxFees);
   params.set('page', page.toString());
 
   let colleges: College[] = [];

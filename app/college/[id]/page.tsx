@@ -4,13 +4,13 @@ import { CollegeDetail } from '@/lib/types';
 import { notFound } from 'next/navigation';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function CollegePage({ params }: PageProps) {
-  const { id } = params;
+  const { id } = await params;
   let college: CollegeDetail | null = null;
   let error = '';
 

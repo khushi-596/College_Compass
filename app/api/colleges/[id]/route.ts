@@ -4,14 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 const prisma = new PrismaClient();
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const college = await prisma.college.findUnique({
       where: { id },
