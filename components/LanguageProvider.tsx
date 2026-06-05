@@ -30,12 +30,43 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
 
     setLanguageState(initialLanguage);
+    // Set cookie on mount
+    document.cookie = `googtrans=/en/${initialLanguage}; path=/`;
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const sync = () => {
+      const translateCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+      if (translateCombo) {
+        if (translateCombo.value !== language) {
+          translateCombo.value = language;
+          translateCombo.dispatchEvent(new Event('change'));
+        }
+        return true;
+      }
+      return false;
+    };
+    
+    if (!sync()) {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts++;
+        if (sync() || attempts > 20) {
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [language, isMounted]);
 
   const setLanguage = (lang: LanguageKey) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
+    document.cookie = `googtrans=/en/${lang}; path=/`;
+    window.location.reload();
   };
 
   const t = (key: string): string => {

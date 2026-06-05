@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { CollegeDetail } from '@/lib/types';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface CompareFormProps {
   colleges: CollegeDetail[];
@@ -11,6 +12,7 @@ interface CompareFormProps {
 export default function CompareForm({ colleges }: CompareFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   
   const [selectedColleges, setSelectedColleges] = useState<string[]>(
     searchParams.getAll('colleges')
@@ -37,7 +39,7 @@ export default function CompareForm({ colleges }: CompareFormProps) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-        Select Colleges to Compare (Max 3)
+        {t('compare.selectColleges')} (Max 3)
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -72,7 +74,7 @@ export default function CompareForm({ colleges }: CompareFormProps) {
         disabled={selectedColleges.length === 0}
         className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
       >
-        Compare Selected ({selectedColleges.length})
+        {t('compare.compareBtn')} ({selectedColleges.length})
       </button>
     </div>
   );

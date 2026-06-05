@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Hide Google Translate top bar and banner */
+.skiptranslate, .goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame {
+  display: none !important;
+}
+body {
+  top: 0px !important;
+}
